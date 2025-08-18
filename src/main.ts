@@ -25,7 +25,7 @@ async function bootstrap() {
   if (process.env.NODE_ENV !== 'production') {
     SwaggerModule.setup('API', app, document);
   }
-
+  console.log('testing auto deploy hook');
   await app.listen(process.env.PORT ?? 3000, process.env.HOST ?? 'localhost');
 }
 
