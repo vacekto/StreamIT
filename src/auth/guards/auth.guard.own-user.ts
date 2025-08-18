@@ -13,8 +13,6 @@ export class OwnUserGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<Request>();
     const user = request.user as AuthenticatedUser;
     const userIdParam = request.params.id;
-    console.log(user);
-    console.log(userIdParam);
     if (!user || user.id !== userIdParam) {
       throw new ForbiddenException(
         'You are not allowed to access this resource',

@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserController } from './user.controller';
-import { UserService } from './user.service';
+import { UserController } from '../user.controller';
+import { UserService } from '../user.service';
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { User } from './entities/entity.user';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { User } from '../entities/entity.user';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { UpdateUserDto } from '../dto/update-user.dto';
 
 describe('User controller', () => {
   let controller: UserController;
@@ -33,7 +33,11 @@ describe('User controller', () => {
 
   describe('create', () => {
     it('should return the created user', async () => {
-      const dto = { username: 'john', email: 'john@test.com', password: 'pwd' };
+      const dto: CreateUserDto = {
+        username: 'john',
+        email: 'john@test.com',
+        password: 'pwd',
+      };
       const mockUser = { id: '1', ...dto };
       service.create.mockResolvedValue(mockUser);
 

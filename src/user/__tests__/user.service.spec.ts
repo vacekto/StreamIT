@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ObjectLiteral, Repository } from 'typeorm';
-import { UserService } from './user.service';
-import { User } from './entities/entity.user';
-import { PostgresErrorCode } from '../util/erro-codes';
+import { UserService } from '../user.service';
+import { User } from '../entities/entity.user';
+import { PostgresErrorCode } from '../../util/erro-codes';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 
 type MockRepo<T extends ObjectLiteral> = Partial<

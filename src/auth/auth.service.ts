@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UserService } from '../user/user.service';
-import { User } from '../user/entities/entity.user';
 import { JwtPayload } from './types/auth.types.jwt-payload';
+import { User } from '../user/entities/entity.user';
 
 @Injectable()
 export class AuthService {
@@ -18,12 +18,14 @@ export class AuthService {
 
     const match = await this.comparePasswords(password, user.password);
     if (!match) return null;
+    console.log('pwd: ', password);
+    console.log('hash: ', user.password);
 
     return user;
   }
 
-  comparePasswords = (pwd1: string, pwd2: string) => {
-    return bcrypt.compare(pwd2, pwd1);
+  comparePasswords = (pwd_provided: string, pwd_hash: string) => {
+    return bcrypt.compare(pwd_provided, pwd_hash);
   };
 
   signJwtToken(user: User) {
