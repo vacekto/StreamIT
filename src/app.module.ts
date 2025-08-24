@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { UserModule } from './user/user.module';
-import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppController } from './app.controller';
+import { AuthModule } from './auth/auth.module';
 import { User } from './user/entities/entity.user';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -24,7 +24,8 @@ import { User } from './user/entities/entity.user';
         password: configService.get('PG_PWD'),
         database: configService.get('PG_DB'),
         synchronize: configService.get('NODE_ENV') !== 'production',
-        dropSchema: configService.get('NODE_ENV') !== 'production',
+        // dropSchema: configService.get('NODE_ENV') !== 'production',
+        dropSchema: false,
         entities: [User],
       }),
     }),

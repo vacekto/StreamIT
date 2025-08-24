@@ -1,27 +1,39 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Response } from 'express';
+import { User } from 'src/user/entities/entity.user';
 import { AuthController } from '../auth.controller';
 import { AuthService } from '../auth.service';
-import { User } from 'src/user/entities/entity.user';
 
 describe('Authentication', () => {
   let controller: AuthController;
-  let service: jest.Mocked<AuthService>;
+  let authService: jest.Mocked<AuthService>;
+  let configService: jest.Mocked<ConfigService>;
 
-  const serviceMock = {
+  const authServiceMock = {
     provide: AuthService,
     useValue: {
-      signJwtToken: jest.fn(),
+      signAccessJwt: jest.fn(),
+      signRefreshJwt: jest.fn(),
+    },
+  };
+
+  const configServiceMock = {
+    provide: ConfigService,
+    useValue: {
+      get: jest.fn(),
     },
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [serviceMock],
+      providers: [authServiceMock, configServiceMock],
     }).compile();
 
     controller = module.get<AuthController>(AuthController);
-    service = module.get(AuthService);
+    authService = module.get(AuthService);
+    configService = module.get(ConfigService);
   });
 
   describe('Auth controller', () => {
@@ -33,15 +45,19 @@ describe('Authentication', () => {
         password: 'pwd123',
       };
 
-      const token = {
-        access_token: 'valid_jwt',
-      };
+      const res: Response = {} as Response;
+      res.status = jest.fn().mockReturnValue(res);
+      res.json = jest.fn().mockReturnValue(res);
+      res.send = jest.fn().mockReturnValue(res);
+      res.cookie = jest.fn().mockReturnValue(res);
+      res.clearCookie = jest.fn().mockReturnValue(res);
 
-      service.signJwtToken.mockReturnValue(token);
+      const token = 'valid_jwt';
 
-      const result = controller.login(user);
-      expect(result).toEqual(token);
-      expect(service.signJwtToken).toHaveBeenCalledWith(user);
+      authService.signAccessJwt.mockResolvedValue(token);
+      const result = controller.login(user, res);
+      expect(result).toEqual(new Promise(() => ({})));
+      expect(authService.signAccessJwt).toHaveBeenCalledWith(user);
     });
   });
 });

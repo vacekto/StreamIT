@@ -1,24 +1,24 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
-  Delete,
-  ParseUUIDPipe,
-  NotFoundException,
+  ClassSerializerInterceptor,
   ConflictException,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  NotFoundException,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
   UseGuards,
   UseInterceptors,
-  ClassSerializerInterceptor,
-  HttpCode,
 } from '@nestjs/common';
-import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { OwnUserGuard } from '../auth/guards/auth.guard.own-user';
 import { JwtAuthGuard } from '../auth/guards/auty.guard.jwt-guard';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserService } from './user.service';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('user')
