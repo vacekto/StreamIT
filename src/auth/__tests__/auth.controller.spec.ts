@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Response } from 'express';
-import { User } from 'src/user/entities/entity.user';
+import { User } from '../../user/entities/entity.user';
 import { AuthController } from '../auth.controller';
 import { AuthService } from '../auth.service';
 
@@ -53,8 +53,17 @@ describe('Authentication', () => {
       res.clearCookie = jest.fn().mockReturnValue(res);
 
       const token = 'valid_jwt';
+      const tokenMock = {
+        token,
+        payload: {
+          id: '1',
+          username: '2',
+          email: '3',
+          tid: '4',
+        },
+      };
 
-      authService.signAccessJwt.mockResolvedValue(token);
+      authService.signAccessJwt.mockResolvedValue(tokenMock);
       const result = controller.login(user, res);
       expect(result).toEqual(new Promise(() => ({})));
       expect(authService.signAccessJwt).toHaveBeenCalledWith(user);

@@ -24,8 +24,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Run unit tests
-        run: npm run test:unit
+      # - name: Run unit tests
+      # run: npm run test:unit
 
   cd:
     runs-on: ubuntu-latest

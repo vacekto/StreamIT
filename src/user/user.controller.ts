@@ -15,7 +15,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { OwnUserGuard } from '../auth/guards/auth.guard.own-user';
-import { JwtAuthGuard } from '../auth/guards/auty.guard.jwt-guard';
+import { JwtAccessGuard } from '../auth/guards/auty.guard.jwt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserService } from './user.service';
@@ -44,7 +44,7 @@ export class UserController {
     return user;
   }
 
-  @UseGuards(JwtAuthGuard, OwnUserGuard)
+  @UseGuards(JwtAccessGuard, OwnUserGuard)
   @Patch(':id')
   async update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -53,7 +53,7 @@ export class UserController {
     return this.userService.update(id, updateUserDto);
   }
 
-  @UseGuards(JwtAuthGuard, OwnUserGuard)
+  @UseGuards(JwtAccessGuard, OwnUserGuard)
   @Delete(':id')
   @HttpCode(204)
   async remove(@Param('id', ParseUUIDPipe) id: string) {

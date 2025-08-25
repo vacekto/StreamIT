@@ -20,7 +20,8 @@ import { RefreshJwtStrategy } from './strategies/auth.strategy.refresh-jwt-strat
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        signOptions: { expiresIn: '1d' },
+        signOptions: {},
+        expiresIn: `${configService.get<string>('JWT_ACCESS_LIFETIME')}s`,
         secret: configService.get<string>('JWT_ACCESS_SECRET'),
       }),
     }),

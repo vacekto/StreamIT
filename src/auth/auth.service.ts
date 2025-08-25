@@ -2,10 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
+import { RedisService } from '../redis/redis.service';
 import { User } from '../user/entities/entity.user';
 import { UserService } from '../user/user.service';
-import { AuthenticatedUser } from './types/auth.types.authenticated-user';
-import { JwtPayload } from './types/auth.types.jwt-payload';
+import { AuthenticatedUser, JwtPayload } from './types/auth.types';
 
 @Injectable()
 export class AuthService {
@@ -13,6 +14,7 @@ export class AuthService {
     private userService: UserService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private reidsService: RedisService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<User | null> {
@@ -25,33 +27,51 @@ export class AuthService {
     return user;
   }
 
+  generateTokenId(length = 16) {
+    return randomBytes(length).toString('hex');
+  }
+
   comparePasswords = (pwd_provided: string, pwd_hash: string) => {
     return bcrypt.compare(pwd_provided, pwd_hash);
   };
 
-  signAccessJwt(user: AuthenticatedUser) {
+  async signAccessJwt(user: AuthenticatedUser) {
     const payload: JwtPayload = {
       username: user.username,
       id: user.id,
       email: user.email,
+      tid: this.generateTokenId(),
     };
 
-    return this.jwtService.signAsync(payload, {
-      expiresIn: '15m',
+    const refreshExp = parseInt(
+      this.configService.get<string>('JWT_ACCESS_LIFETIME')!,
+    );
+
+    const token = await this.jwtService.signAsync(payload, {
+      expiresIn: refreshExp,
       secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
     });
+
+    return { payload, token };
   }
 
-  signRefreshJwt(user: AuthenticatedUser) {
+  async signRefreshJwt(user: AuthenticatedUser) {
     const payload: JwtPayload = {
       username: user.username,
       id: user.id,
       email: user.email,
+      tid: this.generateTokenId(),
     };
 
-    return this.jwtService.signAsync(payload, {
-      expiresIn: '7d',
+    const refreshExp = parseInt(
+      this.configService.get<string>('JWT_REFRESH_LIFETIME')!,
+    );
+
+    const token = await this.jwtService.signAsync(payload, {
+      expiresIn: refreshExp,
       secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
     });
+
+    return { payload, token };
   }
 }
