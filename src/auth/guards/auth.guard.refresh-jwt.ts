@@ -27,7 +27,6 @@ export class JwtRefreshGuard extends AuthGuard('jwt-refresh') {
       throw err || new UnauthorizedException('UNAUTHORIZED');
     }
 
-    console.log('refresh debug: ', err, payload);
     return payload;
   }
 }

@@ -8,9 +8,9 @@ import { UserModule } from 'src/user/user.module';
 import { UserService } from 'src/user/user.service';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { JwtStrategy } from './strategies/auth.strategy.jwt-strategy';
-import { LocalStrategy } from './strategies/auth.strategy.local-strategy';
-import { RefreshJwtStrategy } from './strategies/auth.strategy.refresh-jwt-strategy';
+import { JwtStrategy } from './strategies/auth.strategy.jwt';
+import { LocalStrategy } from './strategies/auth.strategy.local';
+import { RefreshJwtStrategy } from './strategies/auth.strategy.refresh-jwt';
 
 @Module({
   imports: [

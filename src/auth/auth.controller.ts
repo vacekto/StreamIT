@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Query, Res, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { RedisService } from 'src/redis/redis.service';
+import { UserService } from 'src/user/user.service';
 import { User } from '../user/entities/entity.user';
 import { AuthService } from './auth.service';
 import { ReqUser } from './decorators/auth.decorator.user';
@@ -13,11 +14,54 @@ import { JwtPayloadExtended } from './types/auth.types';
 
 @Controller('auth')
 export class AuthController {
+  private appOrigin: string;
+  private host: string;
+  private port: string;
+  private isProd: boolean;
+  private jwtRefreshLifetime: number;
+  private cookieJwtName: string;
+  private googleRedirectUri: string;
+  private googleClientId: string;
+  private googleClientSecret: string;
+
   constructor(
     private authService: AuthService,
     private configService: ConfigService,
     private redisService: RedisService,
-  ) {}
+    private userService: UserService,
+  ) {
+    this.appOrigin = this.configService.get('APP_ORIGIN')!;
+    this.host = this.configService.get('HOST')!;
+    this.port = this.configService.get('PORT')!;
+    this.isProd = this.configService.get('NODE_ENV') === 'production';
+    this.jwtRefreshLifetime = parseInt(
+      this.configService.get('JWT_REFRESH_LIFETIME')!,
+    );
+    this.cookieJwtName = this.configService.get('JWT_REFRESH_COOKIE')!;
+    this.googleRedirectUri = `${this.isProd ? 'https' : 'http'}://${this.host}:${this.port}/auth/google/callback`;
+    this.googleClientId = this.configService.get('GOOGLE_CLIENT_ID')!;
+    this.googleClientSecret = this.configService.get('GOOGLE_CLIENT_SECRET')!;
+  }
+
+  private clearRefreshTokenCookie(res: Response) {
+    res.clearCookie(this.cookieJwtName, {
+      httpOnly: true,
+      secure: this.isProd,
+      sameSite: 'strict',
+      path: '/auth',
+      maxAge: this.jwtRefreshLifetime * 1000,
+    });
+  }
+
+  private setRefreshTokenCookie(res: Response, token: string) {
+    res.cookie(this.cookieJwtName, token, {
+      httpOnly: true,
+      secure: this.isProd,
+      sameSite: 'strict',
+      path: '/auth',
+      maxAge: this.jwtRefreshLifetime * 1000,
+    });
+  }
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
@@ -39,6 +83,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @ReqUser() payload: JwtPayloadExtended,
   ) {
+    this.clearRefreshTokenCookie(res);
     await this.redisService.invalidateToken(payload.tid, payload.id);
     return { message: 'Logged out' };
   }
@@ -73,23 +118,66 @@ export class AuthController {
     return resData;
   }
 
-  private clearRefreshTokenCookie(res: Response) {
-    res.clearCookie(this.configService.get('JWT_REFRESH_COOKIE')!, {
-      httpOnly: true,
-      secure: this.configService.get('NODE_ENV') === 'production',
-      sameSite: 'strict',
-      path: '/auth',
-      maxAge: parseInt(this.configService.get('JWT_REFRESH_LIFETIME')!) * 1000,
-    });
+  @Get('google')
+  redirectToGoogle(@Res() res: Response) {
+    const url = this.authService.getGoogleAuthUrl();
+    res.redirect(url);
   }
 
-  private setRefreshTokenCookie(res: Response, token: string) {
-    res.cookie(this.configService.get('JWT_REFRESH_COOKIE')!, token, {
-      httpOnly: true,
-      secure: this.configService.get('NODE_ENV') === 'production',
-      sameSite: 'strict',
-      path: '/auth',
-      maxAge: parseInt(this.configService.get('JWT_REFRESH_LIFETIME')!) * 1000,
+  @Get('google/callback')
+  async googleCallback(@Query('code') code: string, @Res() res: Response) {
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        code,
+        client_id: this.googleClientId,
+        client_secret: this.googleClientSecret,
+        redirect_uri: this.googleRedirectUri,
+        grant_type: 'authorization_code',
+      }),
     });
+
+    if (!tokenRes.ok) {
+      throw new Error(`Failed to fetch token: ${tokenRes.statusText}`);
+    }
+
+    const tokenData = await tokenRes.json();
+    const { id_token } = tokenData;
+    const ticket = await this.authService.verifyGoogleIdToken(id_token);
+    const email = ticket.email;
+
+    const user = await this.userService.findByEmail(email);
+    if (!user) throw new Error(`No user with email ${email} is registered`);
+
+    const [accessToken, refreshToken] = await Promise.all([
+      this.authService.signAccessJwt(user),
+      this.authService.signRefreshJwt(user),
+    ]);
+    this.setRefreshTokenCookie(res, refreshToken.token);
+    await this.redisService.registerToken(
+      refreshToken.payload.id,
+      refreshToken.payload.tid,
+    );
+
+    const resData = { access_token: accessToken.token };
+    const resJson = JSON.stringify(resData);
+
+    res.send(`
+    <html>
+      <body>
+        <script>
+          // send JWT back to the opener (the tab that called window.open)
+          window.opener.postMessage(
+            ${resJson},
+            "${this.appOrigin}"
+          );
+          window.close();
+        </script>
+      </body>
+    </html>
+  `);
   }
 }

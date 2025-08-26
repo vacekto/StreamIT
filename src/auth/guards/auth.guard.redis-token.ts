@@ -24,7 +24,6 @@ export class RedisTokenGuard implements CanActivate {
       throw new UnauthorizedException('TOKEN_REVOKED');
       // TODO: send email to user that account has been compromised
     }
-    console.log('redis debug:', payload);
 
     return true;
   }
