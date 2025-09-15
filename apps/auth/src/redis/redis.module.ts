@@ -16,5 +16,5 @@ import { RedisService } from './redis.service';
 export class RedisModule {}
 
 function createRedisClient() {
-  return new Redis({ host: '127.0.0.1', port: 6379 });
+  return new Redis({ host: 'redis', port: 6379 });
 }

@@ -1,9 +1,9 @@
 import { Controller, Get, Post, Query, Res, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
-import { RedisService } from 'src/redis/redis.service';
-import { UserService } from 'src/user/user.service';
+import { RedisService } from '../redis/redis.service';
 import { User } from '../user/entities/entity.user';
+import { UserService } from '../user/user.service';
 import { AuthService } from './auth.service';
 import { ReqUser } from './decorators/auth.decorator.user';
 import { LocalAuthGuard } from './guards/auth.guard.local-guard';

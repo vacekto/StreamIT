@@ -1,0 +1,14 @@
+FROM node:24-alpine
+
+WORKDIR /app
+
+COPY package*.json  ./
+COPY nest-cli.json  ./
+COPY tsconfig*.json ./
+COPY libs ./libs
+
+RUN npm install
+
+COPY apps/auth apps/auth
+
+CMD ["npm", "run", "start:dev:auth"]

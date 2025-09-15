@@ -1,26 +1,58 @@
-version: '3.8'
+# services:
+#   app:
+#     build: Dockerfile.dev
+#     ports:
+#       - "${PORT}:3000"
+#     environment:
+#       DATABASE_URL: postgres://${PG_USER}:${PG_PWD}@${PG_HOST}:${PG_PORT}/${PG_DB}
+#       JWT_SECRET: ${JWT_SECRET}
+#       NODE_ENV: ${NODE_ENV}
+
+#       PG_USER: ${PG_USER}
+#       PG_DB: ${PG_DB}
+#       PG_PWD: ${PG_PWD}
+#       PG_HOST: db
+#       PG_PORT: ${PG_PORT}
+#     depends_on:
+#       - db
+
+#   db:
+#     image: postgres:16-alpine
+#     environment:
+#       POSTGRES_USER: ${PG_USER}
+#       POSTGRES_PASSWORD: ${PG_PWD}
+#       POSTGRES_DB: ${PG_DB}
 
 services:
-  app:
-    build: Dockerfile.dev
+  auth:
+    build:
+      context: .
+      dockerfile: apps/auth/Dockerfile
+    container_name: auth
+    volumes:
+      - ./apps/auth/src:/app/apps/auth/src
+      - ./libs:/app/libs
     ports:
-      - "${PORT}:3000"
-    environment:
-      DATABASE_URL: postgres://${PG_USER}:${PG_PWD}@${PG_HOST}:${PG_PORT}/${PG_DB}
-      JWT_SECRET: ${JWT_SECRET}
-      NODE_ENV: ${NODE_ENV}
-
-      PG_USER: ${PG_USER}
-      PG_DB: ${PG_DB}
-      PG_PWD: ${PG_PWD}
-      PG_HOST: db
-      PG_PORT: ${PG_PORT}
+      - 3000:3000
+    env_file:
+      - ./apps/auth/.env
     depends_on:
       - db
+      - redis
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: unless-stopped
+    # volumes:
+    #   - redis-data:/data
+    command: ['redis-server', '--appendonly', 'yes'] # Enables persistence (AOF mode)
 
   db:
     image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: ${PG_USER}
-      POSTGRES_PASSWORD: ${PG_PWD}
-      POSTGRES_DB: ${PG_DB}
+    # environment:
+    #   POSTGRES_USER: ${PG_USER}
+    #   POSTGRES_PASSWORD: ${PG_PWD}
+    #   POSTGRES_DB: ${PG_DB}
+    env_file:
+      - ./apps/auth/.env

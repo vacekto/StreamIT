@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from 'src/user/entities/entity.user';
+import { User } from '../user/entities/entity.user';
 
 @Global()
 @Module({
@@ -13,9 +13,9 @@ import { User } from 'src/user/entities/entity.user';
         type: 'postgres',
         host: config.get('PG_HOST'),
         port: config.get<number>('PG_PORT'),
-        username: config.get('PG_USER'),
-        password: config.get('PG_PWD'),
-        database: config.get('PG_DB'),
+        username: config.get('POSTGRES_USER'),
+        password: config.get('POSTGRES_PASSWORD'),
+        database: config.get('POSTGRES_DB'),
         entities: [User],
         synchronize: config.get('NODE_ENV') !== 'production',
         dropSchema: false,
